@@ -10,4 +10,5 @@ urlpatterns = [
     url(r'^show/user/(?P<user_id>\d+)$', views.wall), 
     url(r'^message/(?P<user_id>\d+)$', views.process_message),
     url(r'^comment/(?P<user_id>\d+)$', views.process_comment),
+    url(r'^dashboard$', views.showdash),
 ]

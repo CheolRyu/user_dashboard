@@ -108,7 +108,134 @@ class UserManager(models.Manager):
             errors["email"] = "Account doesn't exist for this email. Please register."
             return (True, errors)
 
+    def update_validaiton(request, post_data, user_id):
+        errors = {}
+        for item in post_data:
+            if len(post_data[item]) < 1:
+                errors['submit'] = "All fields required"
 
+            if len(post_data[item]) > 225:
+                errors[item] = "Exceeded field length"
+
+        if len(errors) > 0:
+            return (True, errors)
+            print post_data['type']
+
+
+        if post_data['type'] == 'information':
+            if len(post_data['first_name']) < 2:
+                errors['first_name'] = "Name should be more than 2 characters"
+            if len(post_data['last_name']) < 2:
+                errors['first_name'] = "Name should be more than 2 characters"
+            if num_check(post_data['first_name']):
+                errors['first_name'] = "Names must only contain letters"
+            if num_check(post_data['last_name']):
+                errors['first_name'] = "Names must only contain letters"
+
+            if not EMAIL_REGEX.match(post_data['email']):
+                errors["email"] = "Invalid email address"
+
+            records = User.objects.filter(email=post_data['email'])
+            if len(records) > 0:
+                errors["email"] = "Account already exists for this email"
+            if len(errors) > 0:
+                return (True, errors)
+
+            edit_user = User.objects.get(id=user_id)
+            edit_user.first_name = post_data['first_name']
+            edit_user.last_name = post_data['last_name']
+            edit_user.email = post_data['email']
+            edit_user.save()
+            return (False, "Successfully updated information")
+
+        elif post_data['type'] == 'password':
+            if len(post_data['pwd']) < 8:
+                errors["pwd"] = "Password must be at least 8 characters"
+            if not contains_upper_num(post_data['pwd']):
+                errors["pwd"] = "Password must contain at least one uppercase letter and one number"
+            if post_data['confirm_pwd'] != post_data['pwd']:
+                errors["confirm_pwd"] = "Passwords must match"
+            if len(errors) > 0:
+                return (True, errors)
+
+            new_pwd = bcrypt.hashpw(post_data['pwd'].encode(), bcrypt.gensalt())
+            edit_user = User.objects.get(id=user_id)
+            edit_user.password = new_pwd
+            edit_user.save()
+            return (False, "Successfully updated password")
+
+        elif post_data['type'] == 'description':
+            edit_user = User.objects.get(id=user_id)
+            print edit_user
+            edit_user.desc = post_data['desc']
+            edit_user.save()
+            return (False, "Successfully updated description")
+        else:
+            errors['type'] = "Processing error. Invalid submission."
+            return (True, errors)
+
+
+    def admin_update_validations(request, post_data, user_id):
+        errors = {}
+        for item in post_data:
+            if len(post_data[item]) < 1: 
+                errors['submit'] = "All fields required"
+            if len(post_data[item]) > 225:
+                errors[item] = "Exceeded field length"
+
+        if len(errors) > 0:
+            return (True, errors)
+
+
+        if post_data['type'] == 'information':
+            if len(post_data['first_name']) < 2:
+                errors['first_name'] = "Name must be longer than 2 characters"
+            if len(post_data['last_name']) < 2:
+                errors['last_name'] = "Name must be longer than 2 characters"
+            if num_check(post_data['first_name']):
+                errors['first_name'] = "Names must only contain letters"
+            if num_check(post_data['last_name']):
+                errors['first_name'] = "Names must only contain letters"
+            if not EMAIL_REGEX.match(post_data['email']):
+                errors["email"] = "Invalid email address"
+            records = User.objects.filter(email=post_data['email'])
+
+            if len(records) > 0:
+                if records[0].email != post_data['email']:
+                    errors["email"] = "Account already exists for this email"
+
+            if post_data['user_level'] != 'normal' and post_data['user_level'] != 'admin':
+                errors['user_level'] = "Invalid user level entered"
+            
+            if len(errors) > 0:
+                return (True, errors)
+
+            print post_data
+
+            edit_user = User.objects.get(id=user_id)
+            edit_user.first_name = post_data['first_name']
+            edit_user.last_name = post_data['last_name']
+            edit_user.email = post_data['email']
+            edit_user.user_level = post_data['user_level']
+            edit_user.save()
+            print edit_user.user_level
+            return (False, "Successfully updated information")
+
+        elif post_data['type'] == 'password':
+            if len(post_data['pwd']) < 8:
+                errors["pwd"] = "Password must be at least 8 characters"
+            if not contains_upper_num(post_data['pwd']):
+                errors["pwd"] = "Password must contain at least one uppercase letter and one number"
+            if post_data['confirm_pwd'] != post_data['pwd']:
+                errors["confirm_pwd"] = "Passwords must match"
+            if len(errors) > 0:
+                return (True, errors)
+
+            new_pwd = bcrypt.hashpw(post_data['pwd'].encode(), bcrypt.gensalt())
+            edit_user = User.objects.get(id=user_id)
+            edit_user.password = new_pwd
+            edit_user.save()
+            return (False, "Successfully updated password")
 
 class MessageManager(models.Manager):
     def message_validation(self, post_data, user_id, session_id):
@@ -140,16 +267,15 @@ class MessageManager(models.Manager):
             return(False, "Couldn't delete messages")
 
 
-class CommentManager(models.Model):
+class CommentManager(models.Manager):
     def comment_validation(self, post_data, user_id):
-        print(post_data)
         errors = {}
         for item in post_data:
             if len(post_data[item]) < 1:
                 errors['submit'] = "Comment field blank"
             if len(post_data[item]) > 255:
                 errors[item] = "Exceeded field length"
-            
+
         if len(errors) > 0:
             return (True, errors)
 
@@ -161,15 +287,15 @@ class CommentManager(models.Model):
         new_comment.save()
         return (False, "Successfully updated information")
 
-    def comment_delete(self, user_id):
+    def delete_comments(self, user_id):
         get_comments = Comment.objects.filter(commentor=user_id)
         print get_comments
-
         if len(get_comments) > 0:
             get_comments.delete()
             return(True, "Successfully deleted comments")
+
         else:
-            return (False, "Couldn't delete comments")
+            return(False, "Couldn't delete comments")
 
 
 class User(models.Model):
