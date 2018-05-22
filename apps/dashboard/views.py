@@ -103,5 +103,25 @@ def process_message(request,user_id):
         else:
             messages.error(request, "Oops, something went wrong.")
             return redirect('/show/user/' + user_id)
+def process_comment(request, user_id):
+    if not 'id' in request.session:
+        return redirect('/signin')
+    else:
+        if request.method == 'POST':
+            if request.POST['commentor'] != request.session['id']:
+                messages.error(request, "Oops, something went wrong.")
+                return redirect('/show/user/' + user_id)
+            entry = Comment.objects.comment_validation(request.POST, request.session['id'])
+
+            if entry[0] == True:
+                for tag, error in check[1].iteritems():
+                    messages.error(request, error, extra_tags=tag)
+                    return redirect('/show/user/' + user_id)
+            else:
+                return redirect("/show/user/" + user_id)
+
+        else:
+            messages.error(request, "Oops, something went wrong.")
+            return redirect('/show/user/' + user_id)
 
 # Create your views here.

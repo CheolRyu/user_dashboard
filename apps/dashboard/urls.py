@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'^registration$', views.registration),
     url(r'^show/user/(?P<user_id>\d+)$', views.wall), 
     url(r'^message/(?P<user_id>\d+)$', views.process_message),
+    url(r'^comment/(?P<user_id>\d+)$', views.process_comment),
 ]

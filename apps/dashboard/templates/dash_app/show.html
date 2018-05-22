@@ -84,6 +84,26 @@
                         <p class="d-inline-block msg-head"><a href="/shift/{{post.poster.id}}">{{post.poster.first_name}} {{post.poster.last_name}}</a> wrote</p>
                         <p class="d-inline-block msg-time text-right">{{post.created_at}}</p>
                         <p class="blue box-blue pl-2">{{post.message}}</textarea>
+                        {% for cmt in comments %}
+                            {% if post.id == cmt.message.id %}
+                            <p class="d-inline-block msg-head"><a href="/shift/{{cmt.commentor.id}}">{{cmt.commentor.first_name}} {{cmt.commentor.last_name}}</a> wrote</p>
+                            <p class="d-inline-block msg-time text-right">{{cmt.created_at}}</p>
+                            <p class="green box-green pl-2">{{cmt.comment}}</p>
+                            {% else %}
+                            {% endif %}
+                        {% endfor %}
+                        <form action="/comment/{{user.id}}" method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <input type="hidden" class="form-control" name="rel_message" value="{{post.id}}">
+                                <input type="hidden" class="form-control" name="commentor" value="{{request.session.id}}">
+                                <textarea type="text" class="form-control" name="comment" placeholder="write a comment"></textarea>
+                                <div class="form-group text-right mt-2">
+                                    <input type="submit" class="btn btn-success" name="comment_post" value="Post">
+                                </div>
+                            </div>
+
+                        </form>
                     </div>
                 {% endfor %}
             </div>

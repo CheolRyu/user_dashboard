@@ -138,14 +138,18 @@ class MessageManager(models.Manager):
 
         else:
             return(False, "Couldn't delete messages")
+
+
 class CommentManager(models.Model):
     def comment_validation(self, post_data, user_id):
+        print(post_data)
         errors = {}
         for item in post_data:
             if len(post_data[item]) < 1:
                 errors['submit'] = "Comment field blank"
-            if len(post_data[item]) > 225:
+            if len(post_data[item]) > 255:
                 errors[item] = "Exceeded field length"
+            
         if len(errors) > 0:
             return (True, errors)
 
