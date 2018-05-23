@@ -108,36 +108,40 @@ class UserManager(models.Manager):
             errors["email"] = "Account doesn't exist for this email. Please register."
             return (True, errors)
 
-    def update_validaiton(request, post_data, user_id):
+
+    def update_validation(self, post_data, user_id):
         errors = {}
         for item in post_data:
             if len(post_data[item]) < 1:
                 errors['submit'] = "All fields required"
-
-            if len(post_data[item]) > 225:
+            if len(post_data[item]) > 255:
                 errors[item] = "Exceeded field length"
 
         if len(errors) > 0:
             return (True, errors)
-            print post_data['type']
-
+        print post_data['type']
 
         if post_data['type'] == 'information':
             if len(post_data['first_name']) < 2:
                 errors['first_name'] = "Name should be more than 2 characters"
+
             if len(post_data['last_name']) < 2:
-                errors['first_name'] = "Name should be more than 2 characters"
+                errors['last_name'] = "Name should be more than 2 characters"
+
             if num_check(post_data['first_name']):
                 errors['first_name'] = "Names must only contain letters"
+
             if num_check(post_data['last_name']):
-                errors['first_name'] = "Names must only contain letters"
+                errors['last_name'] = "Names must only contain letters"
 
             if not EMAIL_REGEX.match(post_data['email']):
                 errors["email"] = "Invalid email address"
 
             records = User.objects.filter(email=post_data['email'])
+
             if len(records) > 0:
                 errors["email"] = "Account already exists for this email"
+
             if len(errors) > 0:
                 return (True, errors)
 
@@ -151,10 +155,13 @@ class UserManager(models.Manager):
         elif post_data['type'] == 'password':
             if len(post_data['pwd']) < 8:
                 errors["pwd"] = "Password must be at least 8 characters"
+
             if not contains_upper_num(post_data['pwd']):
                 errors["pwd"] = "Password must contain at least one uppercase letter and one number"
+
             if post_data['confirm_pwd'] != post_data['pwd']:
                 errors["confirm_pwd"] = "Passwords must match"
+
             if len(errors) > 0:
                 return (True, errors)
 
@@ -170,12 +177,15 @@ class UserManager(models.Manager):
             edit_user.desc = post_data['desc']
             edit_user.save()
             return (False, "Successfully updated description")
+
+
         else:
             errors['type'] = "Processing error. Invalid submission."
             return (True, errors)
 
 
-    def admin_update_validations(request, post_data, user_id):
+
+    def admin_update_validations(self, post_data, user_id):
         errors = {}
         for item in post_data:
             if len(post_data[item]) < 1: 
@@ -236,6 +246,26 @@ class UserManager(models.Manager):
             edit_user.password = new_pwd
             edit_user.save()
             return (False, "Successfully updated password")
+
+        else:
+            errors['type'] = "Processing error. Invalid submission."
+            return (True, errors)
+
+
+    def is_admin(self, user_id):
+        check = User.objects.get(id=user_id)
+        if check.user_level == 'admin':
+            return (True, 'admin')
+        else:
+            return(False, "Permission denied, access level insufficient")
+    def delete_user(self, user_id):
+        get_user = User.objects.filter(id=user_id)
+        if len(get_user) > 0:
+            get_user.delete()
+            return(True,"Successfully deleted record")
+        else:
+            return(False, "Couldn't delete record, out of range")
+
 
 class MessageManager(models.Manager):
     def message_validation(self, post_data, user_id, session_id):
